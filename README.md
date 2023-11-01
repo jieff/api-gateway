@@ -1,0 +1,1 @@
+# docker run -v $(pwd):/app -p 3000:3003 aqui_nome_imagem
