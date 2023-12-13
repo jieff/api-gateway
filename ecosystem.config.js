@@ -1,9 +1,12 @@
 module.exports = {
-    apps : [{
+  apps: [
+    {
       name: 'dlist_gateway',
-      script: 'yarn',
-      args: 'dev',
-      cwd: '/home/gateway', 
-    }],
-  };
+      script: 'authbind',
+      args: 'node src/server.js',
+      node_args: [], 
+      exec_interpreter: 'none',
+    },
+  ],
+};
   
