@@ -1,17 +1,42 @@
 require('dotenv').config();
-const express = require('express')
-const httpProxy = require('express-http-proxy')
-const app = express()
-const port = 3003
-const { checkToken } = require('./middleware/checkToken')
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
-const userServiceProxy = httpProxy(process.env.USERS_API_URL)
-const productsServiceProxy = httpProxy(process.env.PRODUCTS_API_URL)
+const https = require('https');
+const fs = require('fs');
 
-app.get('/', (req, res) => res.send('Hello Gateway API!!!!'))
+const app = express();
+const port = 443;
 
-app.get('/users', (req, res, next) => userServiceProxy(req, res, next))
-app.get('/products', checkToken, (req, res, next) => productsServiceProxy(req, res, next))
 
-app.listen(port, () => console.log(`API Gateway listening on port ${port}!`))
+// Carregar o certificado SSL e a chave privada
+const privateKey = fs.readFileSync('/etc/letsencrypt/live/dlist.com.br/privkey.pem', 'utf8');
+const certificate = fs.readFileSync('/etc/letsencrypt/live/dlist.com.br/fullchain.pem', 'utf8');
+const credentials = { key: privateKey, cert: certificate };
+
+// Verifica se o envio do endereço do serviço de privacidade está configurado
+if (!process.env.URL_BASE) {
+  console.error('Please provide the PRIVACY environment variable.');
+  process.exit(1);
+}
+
+// Cria um proxy para o serviço de privacidade usando o http-proxy-middleware
+const privacyServiceProxy = createProxyMiddleware({
+  target: process.env.URL_BASE, // Usa o endereço definido no .env para o serviço de privacidade
+  changeOrigin: true, // Altera o cabeçalho Host para o URL de destino
+});
+
+// Criar servidor HTTPS
+const httpsServer = https.createServer(credentials, app);
+
+// Rota para redirecionar para o serviço de privacidade
+app.get('/privacy', (req, res, next) => privacyServiceProxy(req, res, next));
+
+app.get('/delete-account', (req, res, next) => privacyServiceProxy(req, res, next));
+
+app.get('/', (req, res) => res.send('Hello Gateway API!!!!'));
+
+httpsServer.listen(port, () => {
+    console.log(`Example app listening on port ${port} via HTTPS`);
+});
 
