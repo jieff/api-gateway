@@ -34,8 +34,6 @@ app.get('/privacy', (req, res, next) => privacyServiceProxy(req, res, next));
 
 app.get('/delete-account', (req, res, next) => privacyServiceProxy(req, res, next));
 
-app.get('/', (req, res) => res.send('Hello Gateway API!!!!'));
-
 httpsServer.listen(port, () => {
     console.log(`Example app listening on port ${port} via HTTPS`);
 });
