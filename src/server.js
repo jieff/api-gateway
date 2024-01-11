@@ -1,40 +1,31 @@
 require('dotenv').config();
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-
-const https = require('https');
-const fs = require('fs');
+const { userServiceProxy, authServiceProxy } = require('./middleware/proxyConfig');
+const swaggerUi = require('swagger-ui-express');
+const path = require('path');
+const YAML = require('yamljs'); // Certifique-se de que o YAML foi importado corretamente e o arquivo swagger.yaml existe
 
 const app = express();
-const port = 443;
+const port = process.env.PORT || 4000;
 
+const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 
-// Carregar o certificado SSL e a chave privada
-const privateKey = fs.readFileSync('/etc/letsencrypt/live/dlist.com.br/privkey.pem', 'utf8');
-const certificate = fs.readFileSync('/etc/letsencrypt/live/dlist.com.br/fullchain.pem', 'utf8');
-const credentials = { key: privateKey, cert: certificate };
+// Defina um novo router para as rotas do Swagger UI
+const router = express.Router();
 
-// Verifica se o envio do endereço do serviço de privacidade está configurado
-if (!process.env.URL_BASE) {
-  console.error('Please provide the PRIVACY environment variable.');
-  process.exit(1);
-}
+// Aplicar o Swagger UI na rota '/docs'
+router.use('/docs', swaggerUi.serve);
+router.get('/docs', swaggerUi.setup(swaggerDocument));
 
-// Cria um proxy para o serviço de privacidade usando o http-proxy-middleware
-const privacyServiceProxy = createProxyMiddleware({
-  target: process.env.URL_BASE, // Usa o endereço definido no .env para o serviço de privacidade
-  changeOrigin: true, // Altera o cabeçalho Host para o URL de destino
+// Use o router para as rotas do Swagger UI
+app.use('/', router);
+
+// Defina as rotas para os serviços proxy
+app.use('/administrator', userServiceProxy);
+app.use('/employee', userServiceProxy);
+app.use('/enterprise', userServiceProxy);
+app.use('/auth', authServiceProxy);
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port} via HTTP`);
 });
-
-// Criar servidor HTTPS
-const httpsServer = https.createServer(credentials, app);
-
-// Rota para redirecionar para o serviço de privacidade
-app.get('/privacy', (req, res, next) => privacyServiceProxy(req, res, next));
-
-app.get('/delete-account', (req, res, next) => privacyServiceProxy(req, res, next));
-
-httpsServer.listen(port, () => {
-    console.log(`Example app listening on port ${port} via HTTPS`);
-});
-

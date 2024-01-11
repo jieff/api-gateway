@@ -1,0 +1,57 @@
+openapi: 3.0.0
+info:
+  title: AD Management API
+  version: 1.0.0
+  description: Documentation for AD Management API
+
+tags:
+  - name: Account
+    description: Endpoint related to user account operations
+  - name: Admin
+    description: Endpoint related to administrative operations
+  - name: Auth
+    description: Endpoint related to job operations
+  - name: Department
+    description: Endpoint related to department operations
+  - name: Enterprise
+    description: Endpoint related to enterprise operations
+  - name: Feature
+    description: Endpoint related to specific features
+  - name: Plan
+    description: Endpoint related to plan operations
+  - name: Privilege
+    description: Endpoint related to authentication
+  - name: Position
+    description: Endpoint related to access privileges
+  - name: Staff
+    description: Endpoint related to staff operations
+
+paths:
+  /admin/findAll:
+    get:
+      summary: List all users (Admin)
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: List of users retrieved successfully
+
+  /admin/{id}:
+    get:
+      summary: Get a specific user by ID (Admin)
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User retrieved successfully
+        '404':
+          description: User not found
+  # Adicione os paths para outras tags da mesma forma
+
